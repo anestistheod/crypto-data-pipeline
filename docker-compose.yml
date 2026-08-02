@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: crypto_postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: data_user
+      POSTGRES_PASSWORD: my_secure_password
+      POSTGRES_DB: crypto_analytics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init_schema.sql:/docker-entrypoint-initdb.d/init_schema.sql
+
+volumes:
+  postgres_data:

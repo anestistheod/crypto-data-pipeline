@@ -9,28 +9,28 @@ logging.basicConfig(level=logging.INFO,
 
 def transform_crypto_data(raw_data: List[Dict[str, Any]]) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Μετασχηματίζει τα raw JSON δεδομένα του API σε δύο καθαρά Pandas DataFrames
-    που αντιστοιχούν στους πίνακες 'assets' και 'market_data' της βάσης.
+    Transforms raw JSON API data into two clean Pandas DataFrames
+    corresponding to the 'assets' and 'market_data' tables.
 
-    :param raw_data: Λίστα από dictionaries από το API
-    :return: Τριάδα (assets_df, market_data_df)
+    :param raw_data: List of dictionaries from the API
+    :return: Tuple (assets_df, market_data_df)
     """
     if not raw_data:
-        logging.warning("Δεν βρέθηκαν δεδομένα για μετασχηματισμό.")
+        logging.warning("No data found for transformation.")
         return pd.DataFrame(), pd.DataFrame()
 
-    # Μετατροπή της λίστας JSON σε αρχικό Pandas DataFrame
+    # Convert the JSON list into an initial Pandas DataFrame
     df = pd.DataFrame(raw_data)
 
-    # 1. Transform για τον πίνακα ASSETS (Dimension Table)
+    # 1. Transform for the ASSETS table (Dimension Table)
     assets_df = df[['id', 'symbol', 'name']].copy()
     assets_df.rename(columns={'id': 'asset_id'}, inplace=True)
     assets_df['symbol'] = assets_df['symbol'].str.lower()
 
-    # Αφαίρεση διπλότυπων αν υπάρχουν
+    # Remove duplicates if present
     assets_df.drop_duplicates(subset=['asset_id'], inplace=True)
 
-    # 2. Transform για τον πίνακα MARKET_DATA (Fact Table)
+    # 2. Transform for the MARKET_DATA table (Fact Table)
     market_data_df = df[['id', 'current_price',
                          'total_volume', 'market_cap']].copy()
     market_data_df.rename(columns={
@@ -39,15 +39,15 @@ def transform_crypto_data(raw_data: List[Dict[str, Any]]) -> Tuple[pd.DataFrame,
         'total_volume': 'volume_24h'
     }, inplace=True)
 
-    # Προσθήκη UTC Timestamp για την τρέχουσα στιγμή της μέτρησης
+    # Add UTC timestamp for the measurement time
     current_utc_timestamp = datetime.now(timezone.utc)
     market_data_df['timestamp'] = current_utc_timestamp
 
-    # Αναδιάταξη στηλών για να ταιριάζουν ακριβώς με το SQL Schema
+    # Reorder columns to exactly match the SQL schema
     market_data_df = market_data_df[[
         'asset_id', 'timestamp', 'price_usd', 'volume_24h', 'market_cap']]
 
-    # Διασφάλιση σωστών data types (Numeric Conversions)
+    # Ensure correct data types (numeric conversions)
     market_data_df['price_usd'] = pd.to_numeric(
         market_data_df['price_usd'], errors='coerce')
     market_data_df['volume_24h'] = pd.to_numeric(
@@ -56,12 +56,12 @@ def transform_crypto_data(raw_data: List[Dict[str, Any]]) -> Tuple[pd.DataFrame,
         market_data_df['market_cap'], errors='coerce')
 
     logging.info(
-        f"Επιτυχής μετασχηματισμός: {len(assets_df)} assets & {len(market_data_df)} market records.")
+        f"Successful transform: {len(assets_df)} assets & {len(market_data_df)} market records.")
 
     return assets_df, market_data_df
 
 
-# Quick Test: Αυτόνομη εκτέλεση του transform μαζί με το extract
+# Quick Test: Standalone execution of transform with extract
 if __name__ == "__main__":
     from extract import fetch_crypto_data
 

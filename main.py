@@ -3,7 +3,7 @@ from src.extract import fetch_crypto_data
 from src.transform import transform_crypto_data
 from src.load import get_db_engine, load_assets, load_market_data
 
-# Ρύθμιση Logging
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - [%(levelname)s] - %(message)s"
@@ -15,7 +15,7 @@ def run_pipeline():
     logging.info("  Starting Crypto Data Pipeline (ETL)     ")
     logging.info("==========================================")
 
-    # Τα νομίσματα που θέλουμε να παρακολουθούμε
+    # Target coins to monitor
     target_coins = ["bitcoin", "ethereum", "solana", "cardano", "ripple"]
 
     try:
